@@ -1,0 +1,11 @@
+// User reported suspicious activity
+// A user pressed "report suspicious activity" on an MFA prompt they didn't expect. That creates a
+// user risk detection, and it usually means someone else knows the password.
+// MITRE ATT&CK: T1621 Multi-Factor Authentication Request Generation
+// Data: AADUserRiskEvents (needs Entra ID P2)
+// Response: follow the compromised account runbook.
+AADUserRiskEvents
+| where TimeGenerated > ago(7d)
+| where RiskEventType == "userReportedSuspiciousActivity"
+| project TimeGenerated, UserPrincipalName, RiskLevel, RiskState, IpAddress, Location
+| order by TimeGenerated desc

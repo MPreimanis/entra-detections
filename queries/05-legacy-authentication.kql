@@ -1,0 +1,11 @@
+// Legacy authentication in use
+// Successful sign-ins over protocols that can't do MFA: IMAP, POP, SMTP AUTH, Exchange ActiveSync and others.
+// Run it before switching on a policy that blocks legacy authentication, to find out who would break.
+// MITRE ATT&CK: T1078.004 Valid Accounts: Cloud Accounts
+// Data: SigninLogs
+SigninLogs
+| where TimeGenerated > ago(30d)
+| where ResultType == "0"
+| where ClientAppUsed !in ("Browser", "Mobile Apps and Desktop clients", "")
+| summarize SignIns = count(), LastSeen = max(TimeGenerated) by UserPrincipalName, ClientAppUsed, AppDisplayName
+| order by SignIns desc

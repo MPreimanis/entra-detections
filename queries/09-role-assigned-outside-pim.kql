@@ -1,0 +1,19 @@
+// Directory role assigned outside PIM
+// Role assignments made directly instead of through Privileged Identity Management. Standing
+// privileged access should be rare and deliberate.
+// MITRE ATT&CK: T1098.003 Account Manipulation: Additional Cloud Roles
+// Data: AuditLogs
+// Tuning: activations through PIM are initiated by the MS-PIM service and are left out.
+// Response: check the change record. Remove the assignment or convert it to an eligible PIM assignment.
+AuditLogs
+| where TimeGenerated > ago(7d)
+| where OperationName == "Add member to role"
+| extend Actor = coalesce(tostring(InitiatedBy.user.userPrincipalName), tostring(InitiatedBy.app.displayName))
+| where Actor != "MS-PIM"
+| extend Target = coalesce(tostring(TargetResources[0].userPrincipalName), tostring(TargetResources[0].displayName))
+| mv-apply Property = TargetResources[0].modifiedProperties on (
+    summarize Role = take_anyif(tostring(Property.newValue), tostring(Property.displayName) == "Role.DisplayName")
+  )
+| extend Role = trim(@'"', Role)
+| project TimeGenerated, Actor, Target, Role, Result
+| order by TimeGenerated desc

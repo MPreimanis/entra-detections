@@ -1,0 +1,13 @@
+// Break-glass account sign-in
+// Any sign-in by an emergency access account, successful or not. These accounts should almost
+// never be used, so every hit needs an explanation.
+// MITRE ATT&CK: T1078.004 Valid Accounts: Cloud Accounts
+// Data: SigninLogs, AADNonInteractiveUserSignInLogs
+// Tuning: put your break-glass UPNs in the list. Run it as an alert rule every 5 to 15 minutes.
+// Response: find out who used the account and why. If nobody did, treat it as a compromise.
+let breakGlassAccounts = dynamic(["bg-01@contoso.onmicrosoft.com", "bg-02@contoso.onmicrosoft.com"]);
+union SigninLogs, AADNonInteractiveUserSignInLogs
+| where TimeGenerated > ago(1d)
+| where UserPrincipalName in~ (breakGlassAccounts)
+| project TimeGenerated, UserPrincipalName, ResultType, IPAddress, Location, AppDisplayName, ClientAppUsed, UserAgent
+| order by TimeGenerated desc

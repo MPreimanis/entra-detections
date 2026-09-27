@@ -1,0 +1,13 @@
+// Inbox rules that forward or redirect mail
+// Attackers add forwarding rules to keep reading a mailbox after they lose access, or to hide replies
+// from the victim.
+// MITRE ATT&CK: T1114.003 Email Collection: Email Forwarding Rule
+// Data: OfficeActivity (the Microsoft 365 connector in Microsoft Sentinel)
+// Tuning: rules created in Outlook itself can appear as UpdateInboxRules with the details in another field.
+// Response: remove the rule, check where mail went, and follow the compromised account runbook.
+OfficeActivity
+| where TimeGenerated > ago(7d)
+| where Operation in ("New-InboxRule", "Set-InboxRule")
+| where Parameters has_any ("ForwardTo", "RedirectTo", "ForwardAsAttachmentTo")
+| project TimeGenerated, UserId, Operation, ClientIP, Parameters
+| order by TimeGenerated desc

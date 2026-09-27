@@ -1,0 +1,19 @@
+// Consent to an application
+// Every consent grant, by users or admins. An app with consent can read mail and files through
+// Microsoft Graph, and resetting the user's password doesn't remove it. Values arrive JSON-quoted.
+// MITRE ATT&CK: T1528 Steal Application Access Token
+// Data: AuditLogs
+// Response: check the app's publisher and permissions. If it's malicious, remove the grant, disable the
+// app and check what it accessed.
+AuditLogs
+| where TimeGenerated > ago(7d)
+| where OperationName == "Consent to application"
+| extend Actor = coalesce(tostring(InitiatedBy.user.userPrincipalName), tostring(InitiatedBy.app.displayName))
+| extend App = tostring(TargetResources[0].displayName)
+| mv-apply Property = TargetResources[0].modifiedProperties on (
+    summarize
+        IsAdminConsent = take_anyif(tostring(Property.newValue), tostring(Property.displayName) == "ConsentContext.IsAdminConsent"),
+        Permissions = take_anyif(tostring(Property.newValue), tostring(Property.displayName) == "ConsentAction.Permissions")
+  )
+| project TimeGenerated, Actor, App, IsAdminConsent, Permissions, Result
+| order by TimeGenerated desc

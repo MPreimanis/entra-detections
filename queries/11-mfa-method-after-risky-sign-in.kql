@@ -1,0 +1,19 @@
+// New MFA method registered soon after a risky sign-in
+// Attackers who get in often register their own MFA method so they can come back.
+// MITRE ATT&CK: T1556.006 Modify Authentication Process: Multi-Factor Authentication
+// Data: SigninLogs (risk levels need Entra ID P2), AuditLogs
+// Response: remove the new method, revoke sessions, reset the password and ask the user whether they registered it.
+let lookback = 7d;
+let riskySignIns = SigninLogs
+    | where TimeGenerated > ago(lookback)
+    | where RiskLevelDuringSignIn in ("medium", "high")
+    | project RiskyTime = TimeGenerated, UserPrincipalName, RiskLevelDuringSignIn, IPAddress;
+AuditLogs
+| where TimeGenerated > ago(lookback)
+| where OperationName == "User registered security info"
+| extend UserPrincipalName = tostring(TargetResources[0].userPrincipalName)
+| project RegisteredTime = TimeGenerated, UserPrincipalName, Method = ResultReason
+| join kind=inner riskySignIns on UserPrincipalName
+| where RegisteredTime between (RiskyTime .. (RiskyTime + 2h))
+| project RiskyTime, RegisteredTime, UserPrincipalName, RiskLevelDuringSignIn, IPAddress, Method
+| order by RegisteredTime desc

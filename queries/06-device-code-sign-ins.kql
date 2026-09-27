@@ -1,0 +1,13 @@
+// Device code sign-ins
+// Most people never use the device code flow, so each sign-in with it deserves a look. Device code
+// phishing tricks a user into entering the attacker's code; Microsoft reported Storm-2372 doing this
+// through fake meeting invitations in February 2025.
+// MITRE ATT&CK: T1528 Steal Application Access Token
+// Data: SigninLogs, AADNonInteractiveUserSignInLogs
+// Tuning: exclude known users of the flow, such as meeting room devices.
+// Response: if the user didn't expect it, revoke sessions and review what the token was used for.
+union SigninLogs, AADNonInteractiveUserSignInLogs
+| where TimeGenerated > ago(7d)
+| where AuthenticationProtocol == "deviceCode"
+| project TimeGenerated, UserPrincipalName, ResultType, IPAddress, Location, AppDisplayName, UserAgent
+| order by TimeGenerated desc

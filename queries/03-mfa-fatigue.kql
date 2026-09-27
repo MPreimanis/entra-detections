@@ -1,0 +1,17 @@
+// MFA fatigue (push bombing)
+// A user denying or ignoring many MFA prompts within an hour, sometimes followed by an approval.
+// MITRE ATT&CK: T1621 Multi-Factor Authentication Request Generation
+// Data: SigninLogs
+// Tuning: raise the threshold if people often let prompts time out.
+// Response: contact the user through a channel you trust. If they didn't start the sign-ins, the password
+// is known to someone else: revoke sessions, reset it and check for new MFA methods.
+let threshold = 5;
+SigninLogs
+| where TimeGenerated > ago(1d)
+| where ResultType in ("500121", "0")
+| summarize MfaFailures = countif(ResultType == "500121"), Successes = countif(ResultType == "0"),
+    IPs = make_set(IPAddress, 10), FirstSeen = min(TimeGenerated), LastSeen = max(TimeGenerated)
+    by UserPrincipalName, Window = bin(TimeGenerated, 1h)
+| where MfaFailures >= threshold
+| extend ApprovedInSameHour = Successes > 0
+| order by MfaFailures desc
