@@ -3,7 +3,7 @@
 // exactly what changed.
 // MITRE ATT&CK: T1556.009 Modify Authentication Process: Conditional Access Policies
 // Data: AuditLogs
-// Response: match each change to a change record. An unexplained change to a policy is an incident.
+// Response: match each change to a change record. If nobody can explain a change, treat it as an incident.
 AuditLogs
 | where TimeGenerated > ago(7d)
 | where OperationName in ("Add conditional access policy", "Update conditional access policy", "Delete conditional access policy")

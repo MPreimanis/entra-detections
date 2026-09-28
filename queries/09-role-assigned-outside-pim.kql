@@ -1,6 +1,6 @@
 // Directory role assigned outside PIM
-// Role assignments made directly instead of through Privileged Identity Management. Standing
-// privileged access should be rare and deliberate.
+// Role assignments made directly instead of through Privileged Identity Management. Permanent
+// admin roles should be the exception, and each one should have a reason on record.
 // MITRE ATT&CK: T1098.003 Account Manipulation: Additional Cloud Roles
 // Data: AuditLogs
 // Tuning: activations through PIM are initiated by the MS-PIM service and are left out.

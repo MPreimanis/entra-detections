@@ -1,6 +1,6 @@
 # entra-detections
 
-KQL queries for Microsoft Log Analytics and Microsoft Sentinel that catch common attacks on Microsoft Entra ID accounts: password spraying, MFA fatigue, device code phishing, consent phishing, and the persistence attackers set up afterwards. Each query starts with a comment saying what it finds, the MITRE ATT&CK technique, the data it needs, how to tune it and what to do when it fires.
+KQL queries for Log Analytics and Microsoft Sentinel that look for common attacks on Entra ID accounts, like password spraying, MFA fatigue, device code phishing and consent phishing, and for what attackers tend to set up once they're in. The comment at the top of each query says what it finds, which MITRE ATT&CK technique it maps to, what data it needs, what to tune and what to do when it fires.
 
 ## Queries
 
@@ -21,19 +21,19 @@ KQL queries for Microsoft Log Analytics and Microsoft Sentinel that catch common
 
 ## What you need
 
-- A Log Analytics workspace, with a diagnostic setting in Entra ID that sends `SignInLogs`, `NonInteractiveUserSignInLogs` and `AuditLogs` to it. Add `UserRiskEvents` for query 04.
-- Entra ID P1 or P2 to export the logs. Risk data (queries 04 and 11) needs P2.
-- Query 12 needs the Microsoft 365 connector in Microsoft Sentinel, which fills the `OfficeActivity` table.
+- A Log Analytics workspace, with an Entra ID diagnostic setting sending `SignInLogs`, `NonInteractiveUserSignInLogs` and `AuditLogs` to it. Query 04 also needs `UserRiskEvents`.
+- Entra ID P1 or P2 to export the logs. The risk data in queries 04 and 11 needs P2.
+- Query 12 reads the `OfficeActivity` table, which comes from the Microsoft 365 connector in Sentinel.
 
 ## Using them
 
-Paste a query into Logs in the workspace, adjust the time range and thresholds at the top, and run it. In Microsoft Sentinel, create a scheduled analytics rule from it to get alerts; queries 01, 02, 03, 06 and 08 make good first alert rules.
+Paste a query into Logs in the workspace, adjust the time range and thresholds at the top and run it. In Sentinel you can turn a query into a scheduled analytics rule to get alerts. 01, 02, 03, 06 and 08 are good ones to start with.
 
-Expect to tune. Your own admins, pipelines and credential rotations will show up in queries 08, 09 and 10, and a busy tenant needs a higher threshold in query 02 than a small one.
+You'll need to tune them. Your own admins, pipelines and credential rotations will show up in 08, 09 and 10, and a large tenant needs a higher threshold in 02 than a small one.
 
-## Why these
+## Background
 
-They follow real incidents. Midnight Blizzard (disclosed January 2024) started with a password spray against a test tenant account without MFA and continued through an OAuth application with elevated access. Uber's 2022 breach used repeated push prompts. Storm-2372 used device code phishing in 2025. Most of the queries look for what an attacker does after getting in, because that persistence (a new MFA method, an app credential, a forwarding rule) is what survives a password reset.
+The queries are based on real incidents. Midnight Blizzard (disclosed in January 2024) began with a password spray against a test tenant account that had no MFA, and then used an OAuth application with elevated access. The 2022 Uber breach involved repeated push prompts, and Storm-2372 used device code phishing in 2025. Several queries look at what happens after the first sign-in, such as a new MFA method, an app credential or a forwarding rule, because those still work after the password is reset.
 
 ## Licence
 
